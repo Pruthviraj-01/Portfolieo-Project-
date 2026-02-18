@@ -1,75 +1,62 @@
-// ============================================
-// 1. CUSTOM CURSOR — SMALL DOT
-// ============================================
-const cursor = document.getElementById('cursor');
-const ring = document.getElementById('cursorRing');
+// =============================================
+// CUSTOM CURSOR
+// =============================================
+const dot = document.getElementById('cursorDot');
+const trail = document.getElementById('cursorTrail');
+let mx = 0, my = 0, tx = 0, ty = 0;
 
-let mouseX = 0, mouseY = 0;   // actual mouse position
-let ringX = 0,  ringY = 0;    // ring's lagging position
-
-// Instantly move the small dot with mouse
+// Move dot instantly with mouse
 document.addEventListener('mousemove', e => {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
-  cursor.style.transform = `translate(${mouseX - 6}px, ${mouseY - 6}px)`;
-  // -6 offsets by half width/height (12px) to center the dot on cursor
+  mx = e.clientX;
+  my = e.clientY;
+  dot.style.left = mx + 'px';
+  dot.style.top = my + 'px';
 });
 
+// Trail follows with smooth lag
+(function animTrail() {
+  tx += (mx - tx) * 0.13;
+  ty += (my - ty) * 0.13;
+  trail.style.left = tx + 'px';
+  trail.style.top = ty + 'px';
+  requestAnimationFrame(animTrail);
+})();
 
-// ============================================
-// 2. TRAILING RING ANIMATION (requestAnimationFrame loop)
-// ============================================
-function animateRing() {
-  // Lerp (linear interpolation) — ring slowly catches up to mouse
-  // 0.12 = 12% of remaining distance per frame → smooth lag effect
-  ringX += (mouseX - ringX - 19) * 0.12;
-  ringY += (mouseY - ringY - 19) * 0.12;
-  // -19 offsets by half width/height (38px) to center the ring on cursor
-
-  ring.style.transform = `translate(${ringX}px, ${ringY}px)`;
-
-  requestAnimationFrame(animateRing); // loop every frame (~60fps)
-}
-animateRing(); // kick off the loop
-
-
-// ============================================
-// 3. CURSOR HOVER EFFECTS ON LINKS & BUTTONS
-// ============================================
+// Expand trail on hover over links/buttons
 document.querySelectorAll('a, button').forEach(el => {
-
-  // On hover → scale dot up + turn ring purple (accent color)
   el.addEventListener('mouseenter', () => {
-    cursor.style.transform += ' scale(2.5)';
-    ring.style.borderColor = 'var(--accent)';    // #6c63ff purple
+    trail.style.width = '52px';
+    trail.style.height = '52px';
+    trail.style.opacity = '0.3';
   });
-
-  // On leave → reset ring back to teal (accent2 color)
   el.addEventListener('mouseleave', () => {
-    ring.style.borderColor = 'var(--accent2)';   // #00f5d4 teal
+    trail.style.width = '32px';
+    trail.style.height = '32px';
+    trail.style.opacity = '0.5';
   });
-
 });
 
-
-// ============================================
-// 4. SCROLL REVEAL — INTERSECTION OBSERVER
-// ============================================
-
-// Select all elements that should animate in on scroll
-const reveals = document.querySelectorAll('.reveal');
-
-// IntersectionObserver watches when elements enter the viewport
+// =============================================
+// SCROLL REVEAL ANIMATION
+// =============================================
 const observer = new IntersectionObserver(entries => {
   entries.forEach(e => {
     if (e.isIntersecting) {
-      // Add 'visible' class → triggers CSS fade-up transition
-      e.target.classList.add('visible');
+      e.target.classList.add('in');
     }
   });
-}, {
-  threshold: 0.12  // trigger when 12% of element is visible
-});
+}, { threshold: 0.12 });
 
-// Attach observer to every .reveal element
-reveals.forEach(r => observer.observe(r));
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// =============================================
+// HERO CARD PARALLAX (Mouse Tracking)
+// =============================================
+document.addEventListener('mousemove', e => {
+  const x = (e.clientX / innerWidth - 0.5) * 14;
+  const y = (e.clientY / innerHeight - 0.5) * 14;
+  const hs = document.querySelector('.hero-card-stack');
+  if (hs) {
+    hs.style.transform = `translate(${x * 0.4}px, ${y * 0.4}px)`;
+  }
+});
